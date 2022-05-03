@@ -29,10 +29,10 @@ class Multicaster:
         self.sender.sendto(message, (Multicaster.MCAST_GROUP, Multicaster.MCAST_PORT))
 
     def receive(self, onMessageReceived):
-        thread = threading.Thread(target=self._receive, args = (onMessageReceived,))
+        thread = threading.Thread(target=self.__receive, args = (onMessageReceived,))
         thread.start()
 
-    def _receive(self, onMessageReceived):
+    def __receive(self, onMessageReceived):
         buf, senderaddr = self.receiver.recvfrom(Multicaster.BUF_SIZE)
         message = buf.decode(Multicaster.FORMAT)
         onMessageReceived(message)

@@ -18,10 +18,10 @@ class Server:
         self.conn = None
 
     def listen(self, onConnected, onMessageReceived, onConnectionClosed):
-        thread = threading.Thread(target=self._listen, args = (onConnected, onMessageReceived, onConnectionClosed))
+        thread = threading.Thread(target=self.__listen, args = (onConnected, onMessageReceived, onConnectionClosed))
         thread.start()
 
-    def _listen(self, onConnected, onMessageReceived, onConnectionClosed):
+    def __listen(self, onConnected, onMessageReceived, onConnectionClosed):
         self.server.listen()
         Server.print_immediately(f"[SERVER] Listening on {self.serverIp}")
 

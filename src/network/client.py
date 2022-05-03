@@ -15,10 +15,10 @@ class Client:
         self.connected = False
 
     def connect(self, onConnectionClosed, onMessageReceived):
-        thread = threading.Thread(target=self._connect, args = (onConnectionClosed, onMessageReceived))
+        thread = threading.Thread(target=self.__connect, args = (onConnectionClosed, onMessageReceived))
         thread.start()
 
-    def _connect(self, onConnectionClosed, onMessageReceived):
+    def __connect(self, onConnectionClosed, onMessageReceived):
         connected = True
         connectionAborted = False
 
