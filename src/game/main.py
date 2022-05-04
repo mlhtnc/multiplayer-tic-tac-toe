@@ -4,7 +4,9 @@ import time
 
 sys.path.append('../network')
 
-from multicaster import Multicaster
+from multicast_sender import MulticastSender
+from multicast_receiver import MulticastReceiver
+
 
 class MenuState(Enum):
     MAIN_MENU = 0
@@ -21,12 +23,10 @@ class GameInterface:
         self.gameName = None
         self.gameInfos = []
         self.menuState = MenuState.MAIN_MENU
-        self.multicaster = Multicaster()
+        self.multicastSender = MulticastSender()
+        self.multicastReceiver = MulticastReceiver()
         self.server = None
         self.client = None
-
-        self.multicaster.initSender()
-        self.multicaster.initReceiver()
 
     def start(self):
         self.handleMainMenu()
@@ -66,24 +66,25 @@ class GameInterface:
     def handleWaitingForPlayer(self):
         GameInterface.printx("Waiting for players")
 
-        def onMessageReceived(self, message):
+        def onMessageReceived(self, message, senderaddr):
             print(message)
+            print(senderaddr)
             sys.stdout.flush()
 
             if message.startswith(GameInterface.SEND_INFO_CMD):
-                self.multicaster.send(f"{GameInterface.GAME_INFO_CMD}{self.gameName}_")
+                self.multicastSender.send(f"{GameInterface.GAME_INFO_CMD}{self.gameName}_")
 
-            self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
+            self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
 
-        self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
+        self.multicastReceiver.receive(lambda msg : onMessageReceived(self, msg))
 
         loop = True
         while loop:
             input()
         
             loop = False
-            self.multicaster.closeReceiver()
-            self.multicaster.closeSender()
+            self.multicastReceiver.close()
+            self.multicastSender.close()
 
 
     def handleJoinGame(self):
@@ -94,18 +95,18 @@ class GameInterface:
                 params = message[1:len(message) - 1].split("_")
                 self.gameInfos.append(params[1])
 
-            self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
+            self.multicastReceiver.receive(lambda msg : onMessageReceived(self, msg))
         
-        self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
-        self.multicaster.send(GameInterface.SEND_INFO_CMD)
+        self.multicastReceiver.receive(lambda msg : onMessageReceived(self, msg))
+        self.multicastSender.send(GameInterface.SEND_INFO_CMD)
 
         timeout = 2
         while timeout > 0:
             timeout -= 0.1
             time.sleep(0.1)
 
-        self.multicaster.closeReceiver()
-        self.multicaster.closeSender()
+        self.multicastSender.close()
+        self.multicastReceiver.close()
 
         for i in range(len(self.gameInfos)):
             GameInterface.printx(f"1- {self.gameInfos[i]}")
