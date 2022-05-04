@@ -14,12 +14,19 @@ class MenuState(Enum):
 
 class GameInterface:
 
+    SEND_INFO_CMD = "_SEND-INFO_"
+    GAME_INFO_CMD = "_GAME-INFO_"
+
     def __init__(self):
         self.gameName = None
+        self.gameInfos = []
         self.menuState = MenuState.MAIN_MENU
         self.multicaster = Multicaster()
         self.server = None
         self.client = None
+
+        self.multicaster.initSender()
+        self.multicaster.initReceiver()
 
     def start(self):
         self.handleMainMenu()
@@ -59,33 +66,43 @@ class GameInterface:
     def handleWaitingForPlayer(self):
         GameInterface.printx("Waiting for players")
 
-        self.ok = 0
         def onMessageReceived(self, message):
-            print(message)
-            sys.stdout.flush()
-            self.ok += 1
+            if message.startsWith(GameInterface.SEND_INFO_CMD):
+                self.multicaster.send(f"{GameInterface.GAME_INFO_CMD}gameName={self.gameName}_")
 
-            if self.ok < 3:
-                self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
-
-
-        self.multicaster.initReceiver()
+            self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
+        
         self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
 
-        while self.ok < 3:
-            print(self.ok)
-            sys.stdout.flush()
-            time.sleep(0.5)
-
-        print("closing")
-        sys.stdout.flush()
-        self.multicaster.closeReceiver()
-
+        loop = True
+        while True:
+            input()
+            loop = False
 
 
     def handleJoinGame(self):
-        pass
+        GameInterface.printx("Looking for games...")
 
+        def onMessageReceived(self, message):
+            if message.startsWith(GameInterface.GAME_INFO_CMD):
+                params = message[1:len(message) - 1].split("_")
+                self.gameInfos.append(params[1])
+
+            self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
+        
+        self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
+
+        self.multicaster.send(GameInterface.SEND_INFO_CMD)
+
+        timeout = 2
+        while timeout > 0:
+            timeout -= 0.1
+            time.sleep(0.1)
+
+        for i in range(len(self.gameInfos)):
+            GameInterface.printx(f"1- {self.gameInfos[i]}")
+
+        GameInterface.printx(type = "wi")
     
     # jo = just output
     # wi = wait input
