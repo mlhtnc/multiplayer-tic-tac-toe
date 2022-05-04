@@ -1,3 +1,6 @@
+import sys
+sys.path.append('..')
+
 from multicaster import Multicaster
 
 m = Multicaster()
