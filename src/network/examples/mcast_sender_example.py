@@ -1,10 +1,8 @@
 import sys
 sys.path.append('..')
 
-from multicaster import Multicaster
+from multicast_sender import MulticastSender
 
-m = Multicaster()
-
-m.initSender()
+m = MulticastSender()
 m.send("hello network!")
-m.closeSender()
+m.close()
