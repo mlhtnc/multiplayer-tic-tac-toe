@@ -33,9 +33,12 @@ class Multicaster:
         thread.start()
 
     def __receive(self, onMessageReceived):
-        buf, senderaddr = self.receiver.recvfrom(Multicaster.BUF_SIZE)
-        message = buf.decode(Multicaster.FORMAT)
-        onMessageReceived(message)
+        try:
+            buf, senderaddr = self.receiver.recvfrom(Multicaster.BUF_SIZE)
+            message = buf.decode(Multicaster.FORMAT)
+            onMessageReceived(message)
+        except:
+            pass
 
     def closeSender(self):
         self.sender.close()
