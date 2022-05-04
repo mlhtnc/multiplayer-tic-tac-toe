@@ -71,43 +71,41 @@ class GameInterface:
             sys.stdout.flush()
 
             if message.startswith(GameInterface.SEND_INFO_CMD):
-                self.multicaster.send(f"{GameInterface.GAME_INFO_CMD}gameName={self.gameName}_")
-
-                print(f"{GameInterface.GAME_INFO_CMD}gameName={self.gameName}_")
-                sys.stdout.flush()
+                self.multicaster.send(f"{GameInterface.GAME_INFO_CMD}{self.gameName}_")
 
             self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
-        
+
         self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
 
         loop = True
         while loop:
             input()
+        
             loop = False
+            self.multicaster.closeReceiver()
+            self.multicaster.closeSender()
 
 
     def handleJoinGame(self):
         GameInterface.printx("Looking for games...")
 
         def onMessageReceived(self, message):
-            if message.startsWith(GameInterface.GAME_INFO_CMD):
+            if message.startswith(GameInterface.GAME_INFO_CMD):
                 params = message[1:len(message) - 1].split("_")
                 self.gameInfos.append(params[1])
 
             self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
         
         self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
-
         self.multicaster.send(GameInterface.SEND_INFO_CMD)
-        print(GameInterface.SEND_INFO_CMD)
-        sys.stdout.flush()
-
-
 
         timeout = 2
         while timeout > 0:
             timeout -= 0.1
             time.sleep(0.1)
+
+        self.multicaster.closeReceiver()
+        self.multicaster.closeSender()
 
         for i in range(len(self.gameInfos)):
             GameInterface.printx(f"1- {self.gameInfos[i]}")
