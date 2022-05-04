@@ -1,6 +1,7 @@
 import socket
 import struct
 import threading
+import sys
 
 class Multicaster:
     MCAST_GROUP = '224.1.1.1'
@@ -17,12 +18,14 @@ class Multicaster:
         self.sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, Multicaster.TTL)
         self.sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(self.nicIp))
+        self.sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
 
     def initReceiver(self):
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.receiver.bind(('', Multicaster.MCAST_PORT))
         mreq = struct.pack("=4s4s", socket.inet_aton(Multicaster.MCAST_GROUP), socket.inet_aton(self.nicIp))
         self.receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        self.receiver.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
 
     def send(self, message):
         message = message.encode(Multicaster.FORMAT)
@@ -37,6 +40,8 @@ class Multicaster:
             buf, senderaddr = self.receiver.recvfrom(Multicaster.BUF_SIZE)
             message = buf.decode(Multicaster.FORMAT)
             onMessageReceived(message)
+            print(senderaddr)
+            sys.stdout.flush()
         except:
             pass
 
