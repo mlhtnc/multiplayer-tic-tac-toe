@@ -70,7 +70,7 @@ class GameInterface:
             print(message)
             sys.stdout.flush()
 
-            if message.startsWith(GameInterface.SEND_INFO_CMD):
+            if message.startswith(GameInterface.SEND_INFO_CMD):
                 self.multicaster.send(f"{GameInterface.GAME_INFO_CMD}gameName={self.gameName}_")
 
                 print(f"{GameInterface.GAME_INFO_CMD}gameName={self.gameName}_")
