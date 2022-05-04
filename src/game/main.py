@@ -67,15 +67,21 @@ class GameInterface:
         GameInterface.printx("Waiting for players")
 
         def onMessageReceived(self, message):
+            print(message)
+            sys.stdout.flush()
+
             if message.startsWith(GameInterface.SEND_INFO_CMD):
                 self.multicaster.send(f"{GameInterface.GAME_INFO_CMD}gameName={self.gameName}_")
+
+                print(f"{GameInterface.GAME_INFO_CMD}gameName={self.gameName}_")
+                sys.stdout.flush()
 
             self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
         
         self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
 
         loop = True
-        while True:
+        while loop:
             input()
             loop = False
 
@@ -93,6 +99,10 @@ class GameInterface:
         self.multicaster.receive(lambda msg : onMessageReceived(self, msg))
 
         self.multicaster.send(GameInterface.SEND_INFO_CMD)
+        print(GameInterface.SEND_INFO_CMD)
+        sys.stdout.flush()
+
+
 
         timeout = 2
         while timeout > 0:
