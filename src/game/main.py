@@ -76,7 +76,7 @@ class GameInterface:
 
             self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
 
-        self.multicastReceiver.receive(lambda msg : onMessageReceived(self, msg))
+        self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
 
         loop = True
         while loop:
@@ -90,14 +90,14 @@ class GameInterface:
     def handleJoinGame(self):
         GameInterface.printx("Looking for games...")
 
-        def onMessageReceived(self, message):
+        def onMessageReceived(self, message, senderaddr):
             if message.startswith(GameInterface.GAME_INFO_CMD):
                 params = message[1:len(message) - 1].split("_")
                 self.gameInfos.append(params[1])
 
-            self.multicastReceiver.receive(lambda msg : onMessageReceived(self, msg))
+            self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
         
-        self.multicastReceiver.receive(lambda msg : onMessageReceived(self, msg))
+        self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
         self.multicastSender.send(GameInterface.SEND_INFO_CMD)
 
         timeout = 2
@@ -108,6 +108,7 @@ class GameInterface:
         self.multicastSender.close()
         self.multicastReceiver.close()
 
+        print(len(self.gameInfos))
         for i in range(len(self.gameInfos)):
             GameInterface.printx(f"1- {self.gameInfos[i]}")
 
