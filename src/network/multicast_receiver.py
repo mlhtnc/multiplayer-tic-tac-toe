@@ -31,9 +31,6 @@ class MulticastReceiver:
                 buf, senderaddr = self.receiver.recvfrom(MulticastReceiver.BUF_SIZE)
                 if senderaddr[0] != self.nicIp:
                     message = buf.decode(MulticastReceiver.FORMAT)
-                    print(message)
-                    sys.stdout.flush()
-
                     onMessageReceived(message, senderaddr)
             except:
                 pass
