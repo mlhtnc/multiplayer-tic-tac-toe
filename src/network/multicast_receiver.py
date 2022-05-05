@@ -1,5 +1,6 @@
 import socket
 import struct
+import sys
 import threading
 
 class MulticastReceiver:
@@ -18,10 +19,11 @@ class MulticastReceiver:
         self.isReceiving = False
 
     def receive(self, onMessageReceived):
+        self.isReceiving = True
+
         thread = threading.Thread(target=self.__receive, args = (onMessageReceived,))
         thread.start()
 
-        self.isReceiving = True
 
     def __receive(self, onMessageReceived):
         while self.isReceiving:
@@ -29,6 +31,9 @@ class MulticastReceiver:
                 buf, senderaddr = self.receiver.recvfrom(MulticastReceiver.BUF_SIZE)
                 if senderaddr[0] != self.nicIp:
                     message = buf.decode(MulticastReceiver.FORMAT)
+                    print(message)
+                    sys.stdout.flush()
+
                     onMessageReceived(message, senderaddr)
             except:
                 pass
