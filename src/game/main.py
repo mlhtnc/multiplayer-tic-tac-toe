@@ -11,10 +11,13 @@ from multicast_receiver import MulticastReceiver
 class MenuState(Enum):
     MAIN_MENU = 0
     CREATE_GAME = 1
-    JOIN_GAME = 2
+    SEARCH_GAMES = 2
     WAITING_FOR_PLAYER = 3
+    JOIN_GAME = 4
 
 class GameInterface:
+
+    JOIN_GAME_TIMEOUT = 1
 
     SEND_INFO_CMD = "_SEND-INFO_"
     GAME_INFO_CMD = "_GAME-INFO_"
@@ -33,8 +36,8 @@ class GameInterface:
         if self.menuState == MenuState.CREATE_GAME:
             self.handleCreateGame()
             self.handleWaitingForPlayer()
-        elif self.menuState == MenuState.JOIN_GAME:
-            self.handleJoinGame()
+        elif self.menuState == MenuState.SEARCH_GAMES:
+            self.handleSearchGames()
 
     def handleMainMenu(self):
         GameInterface.printx("1- Create Game")
@@ -47,7 +50,7 @@ class GameInterface:
                 self.menuState = MenuState.CREATE_GAME
                 break
             elif inp == "2":
-                self.menuState = MenuState.JOIN_GAME
+                self.menuState = MenuState.SEARCH_GAMES
                 break
             else:
                 GameInterface.printx("Please choose one of the options")
@@ -85,12 +88,10 @@ class GameInterface:
             self.multicastSender.close()
 
 
-    def handleJoinGame(self):
+    def handleSearchGames(self):
         GameInterface.printx("Looking for games...")
 
         def onMessageReceived(self, message, senderaddr):
-            print(message)
-            sys.stdout.flush()
             if message.startswith(GameInterface.GAME_INFO_CMD):
                 params = message[1:len(message) - 1].split("_")
                 self.gameInfos.append(params[1])
@@ -98,19 +99,36 @@ class GameInterface:
         self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
         self.multicastSender.send(GameInterface.SEND_INFO_CMD)
 
-        timeout = 2
-        while timeout > 0:
-            timeout -= 0.1
+        timer = 0
+        while True:
             time.sleep(0.1)
+            timer += 0.1
 
-        self.multicastSender.close()
-        self.multicastReceiver.close()
+            if timer >= GameInterface.JOIN_GAME_TIMEOUT:
+                for i in range(len(self.gameInfos)):
+                    GameInterface.printx(f"1- {self.gameInfos[i]}")
 
-        print(len(self.gameInfos))
-        for i in range(len(self.gameInfos)):
-            GameInterface.printx(f"1- {self.gameInfos[i]}")
+                GameInterface.printx(f"{len(self.gameInfos) + 1}- Refresh")
+                GameInterface.printx(type = "wi")
 
-        GameInterface.printx(type = "wi")
+                selectedGame = int(input())
+                if selectedGame >= 1 and selectedGame <= len(self.gameInfos):
+                    # TODO: get server info
+                    self.menuState = MenuState.JOIN_GAME
+                    self.multicastSender.close()
+                    self.multicastReceiver.close()
+
+                    break
+                else:
+                    self.gameInfos = []
+                    timer = 0
+
+                    self.multicastSender.send(GameInterface.SEND_INFO_CMD)
+
+
+        
+
+
     
     # jo = just output
     # wi = wait input

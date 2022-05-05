@@ -1,5 +1,6 @@
 import socket
 import struct
+import sys
 import threading
 
 class MulticastReceiver:
@@ -18,10 +19,11 @@ class MulticastReceiver:
         self.isReceiving = False
 
     def receive(self, onMessageReceived):
+        self.isReceiving = True
+
         thread = threading.Thread(target=self.__receive, args = (onMessageReceived,))
         thread.start()
 
-        self.isReceiving = True
 
     def __receive(self, onMessageReceived):
         while self.isReceiving:
