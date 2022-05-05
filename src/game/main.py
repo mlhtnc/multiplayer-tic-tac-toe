@@ -74,8 +74,6 @@ class GameInterface:
             if message.startswith(GameInterface.SEND_INFO_CMD):
                 self.multicastSender.send(f"{GameInterface.GAME_INFO_CMD}{self.gameName}_")
 
-            self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
-
         self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
 
         loop = True
@@ -91,11 +89,11 @@ class GameInterface:
         GameInterface.printx("Looking for games...")
 
         def onMessageReceived(self, message, senderaddr):
+            print(message)
+            sys.stdout.flush()
             if message.startswith(GameInterface.GAME_INFO_CMD):
                 params = message[1:len(message) - 1].split("_")
                 self.gameInfos.append(params[1])
-
-            self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
         
         self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
         self.multicastSender.send(GameInterface.SEND_INFO_CMD)

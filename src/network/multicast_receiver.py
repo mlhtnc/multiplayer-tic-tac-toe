@@ -15,21 +15,26 @@ class MulticastReceiver:
         self.receiver.bind(('', MulticastReceiver.MCAST_PORT))
         mreq = struct.pack("=4s4s", socket.inet_aton(MulticastReceiver.MCAST_GROUP), socket.inet_aton(self.nicIp))
         self.receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        self.isReceiving = False
 
     def receive(self, onMessageReceived):
         thread = threading.Thread(target=self.__receive, args = (onMessageReceived,))
         thread.start()
 
+        self.isReceiving = True
+
     def __receive(self, onMessageReceived):
-        try:
-            buf, senderaddr = self.receiver.recvfrom(MulticastReceiver.BUF_SIZE)
-            if senderaddr[0] != self.nicIp:
-                message = buf.decode(MulticastReceiver.FORMAT)
-                onMessageReceived(message, senderaddr)
-        except:
-            pass
+        while self.isReceiving:
+            try:
+                buf, senderaddr = self.receiver.recvfrom(MulticastReceiver.BUF_SIZE)
+                if senderaddr[0] != self.nicIp:
+                    message = buf.decode(MulticastReceiver.FORMAT)
+                    onMessageReceived(message, senderaddr)
+            except:
+                pass
 
     def close(self):
+        self.isReceiving = False
         self.receiver.close()
 
     @staticmethod
