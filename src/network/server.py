@@ -3,7 +3,7 @@ import socket
 import threading
 
 sys.path.append('../helpers/event')
-sys.path.append('../helpers/logger')
+sys.path.append('../helpers')
 
 from event import Event
 from logger import log, logError
