@@ -1,13 +1,16 @@
 from enum import Enum
 import sys
 import time
+from game.game import GameState, Turn
 
 sys.path.append('../network')
+
 
 from multicast_sender import MulticastSender
 from multicast_receiver import MulticastReceiver
 from server import Server
 from client import Client
+from game import Game
 
 
 class MenuState(Enum):
@@ -27,6 +30,7 @@ class GameInterface:
     GAME_INFO_CMD = "_GAME-INFO_"
     JOIN_GAME_CMD = "_JOIN-GAME_"
     JOIN_ACCEPTED_CMD = "_JOIN-ACCEPTED_"
+    MOVE_CMD = "_MOVE_"
 
     def __init__(self):
         self.gameName = None
@@ -181,16 +185,75 @@ class GameInterface:
             time.sleep(0.1)
 
     def handleServerGameLoop(self):
-        GameInterface.printx("handleServerLoop")
+        GameInterface.printx("Game Starting...")
 
+        g = Game()
+        state = GameState.NOT_FINISHED
 
+        while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
+            row, col = self.getMoveFromUser()
+            state = g.move(row, col)
+            g.printBoard()
+
+            self.server.send(f"{GameInterface.MOVE_CMD}_{row}_{col}_")
+
+            while g.turn == Turn.O:
+                time.sleep(0.1)
+
+        def onClientMessageReceived(self, message):
+            if message.startswith(GameInterface.MOVE_CMD):
+                params = message[1:len(message) - 1].split("_")
+                row = params[1]
+                col = params[2]
+
+                g.move(row, col)
+                g.printBoard()
+
+        self.server.onMessageReceived += lambda msg : onClientMessageReceived(self, msg)
+
+        GameInterface.printx("Game over")
 
         self.server.close()
 
     def handleClientGameLoop(self):
-        GameInterface.printx("handleClientLoop")
+        GameInterface.printx("Game Starting...")
+
+        g = Game()
+        state = GameState.NOT_FINISHED
+
+        while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
+            row, col = self.getMoveFromUser()
+            state = g.move(row, col)
+            g.printBoard()
+
+            self.client.send(f"{GameInterface.MOVE_CMD}_{row}_{col}_")
+
+            while g.turn == Turn.X:
+                time.sleep(0.1)
     
+        def onMessageReceived(self, message):
+            if message.startswith(GameInterface.MOVE_CMD):
+                params = message[1:len(message) - 1].split("_")
+                row = params[1]
+                col = params[2]
+
+                g.move(row, col)
+                g.printBoard()
+
+        self.client.onMessageReceived += lambda msg : onMessageReceived(self, msg)
+
+        GameInterface.printx("Game over")
+
         self.client.close()
+
+    def getMoveFromUser(self):
+        GameInterface.printx("Row: ")
+        row = int(input())
+        GameInterface.printx("Col: ")
+        col = int(input())
+
+        return row, col
+
 
     # jo = just output
     # wi = wait input
