@@ -195,6 +195,8 @@ class GameInterface:
 
             self.server.send(f"{GameInterface.MOVE_CMD}_{row}_{col}_")
 
+            GameInterface.printx("Waiting for move...")
+
             while g.turn == Turn.O:
                 time.sleep(0.1)
 
@@ -215,9 +217,14 @@ class GameInterface:
 
     def handleClientGameLoop(self):
         GameInterface.printx("Game Starting...")
+        GameInterface.printx("Waiting for move...")
+
 
         g = Game()
         state = GameState.NOT_FINISHED
+
+        while g.turn == Turn.X:
+                time.sleep(0.1)
 
         while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
             row, col = self.getMoveFromUser()
@@ -225,6 +232,8 @@ class GameInterface:
             g.printBoard()
 
             self.client.send(f"{GameInterface.MOVE_CMD}_{row}_{col}_")
+
+            GameInterface.printx("Waiting for move...")
 
             while g.turn == Turn.X:
                 time.sleep(0.1)
@@ -245,9 +254,9 @@ class GameInterface:
         self.client.close()
 
     def getMoveFromUser(self):
-        GameInterface.printx("Row: ")
+        GameInterface.printx("Row: ", type = "wi")
         row = int(input())
-        GameInterface.printx("Col: ")
+        GameInterface.printx("Col: ", type = "wi")
         col = int(input())
 
         return row, col
