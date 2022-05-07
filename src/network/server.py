@@ -3,8 +3,10 @@ import socket
 import threading
 
 sys.path.append('../helpers/event')
+sys.path.append('../helpers/logger')
 
 from event import Event
+from logger import log, logError
 
 class Server:
     PORT = 5050
@@ -31,7 +33,7 @@ class Server:
 
     def __listen(self):
         self.server.listen()
-        Server.print_immediately(f"[SERVER] Listening on {self.serverIp}")
+        log(f"[SERVER] Listening on {self.serverIp}")
 
         addr = None
 
@@ -61,7 +63,7 @@ class Server:
             
     def send(self, message):
         if self.conn == None:
-           Server.eprint_immediately(Server.NO_CONNECTION_MESSAGE)
+           logError(Server.NO_CONNECTION_MESSAGE)
            return
 
         self.conn.send(message.encode(Server.FORMAT))
@@ -74,15 +76,6 @@ class Server:
 
     def isConnected(self):
         return self.conn != None
-
-    def print_immediately(s):
-        print(s)
-        sys.stdout.flush()
-
-    @staticmethod
-    def eprint_immediately(s):
-        print(s, file = sys.stderr)
-        sys.stderr.flush()
 
     @staticmethod
     def getNicIp():

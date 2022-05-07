@@ -28,8 +28,6 @@ class GameInterface:
     JOIN_GAME_CMD = "_JOIN-GAME_"
     JOIN_ACCEPTED_CMD = "_JOIN-ACCEPTED_"
 
-
-
     def __init__(self):
         self.gameName = None
         self.gameInfos = []

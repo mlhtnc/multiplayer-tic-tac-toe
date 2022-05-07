@@ -3,8 +3,10 @@ import socket
 import threading
 
 sys.path.append('../helpers/event')
+sys.path.append('../helpers/logger')
 
 from event import Event
+from logger import log
 
 class Client:
     PORT = 5050
@@ -38,7 +40,7 @@ class Client:
             self.client.connect(self.addr)
             self.connected = True
             self.onConnected()
-            Client.print_immediately("[Client] Connected")
+            log("[Client] Connected")
 
             while connected and not connectionAborted:
                 message = self.client.recv(Client.BUF_SIZE)
@@ -56,7 +58,7 @@ class Client:
             self.client.close()
             self.connected = False
             self.onConnectionClosed()
-            Client.print_immediately("[Client] Disconnected")
+            log("[Client] Disconnected")
 
     def send(self, message):
         message = message.encode(Client.FORMAT)
@@ -67,8 +69,3 @@ class Client:
 
     def isConnected(self):
         return self.connected
-
-    @staticmethod
-    def print_immediately(s):
-        print(s)
-        sys.stdout.flush()
