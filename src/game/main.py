@@ -107,6 +107,7 @@ class GameInterface:
                 self.menuState = MenuState.SERVER_GAME_LOOP
                 self.multicastReceiver.close()
                 self.multicastSender.close()
+                self.server.onMessageReceived.removeAllListeners()
         
                 self.server.send(f"{GameInterface.JOIN_ACCEPTED_CMD}")
 
@@ -165,11 +166,14 @@ class GameInterface:
                 # self.serverPlayerName = params[1]
 
                 self.menuState = MenuState.CLIENT_GAME_LOOP
+                self.client.onMessageReceived.removeAllListeners()
+
 
                 self.isPlayerJoined = True
 
         def onConnected(self):
             self.client.send(f"{GameInterface.JOIN_GAME_CMD}")
+            self.client.onConnected.removeAllListeners()
 
         self.client.onMessageReceived += lambda msg : onMessageReceived(self, msg)
         self.client.onConnected += lambda: onConnected(self)
