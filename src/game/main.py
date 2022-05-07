@@ -1,11 +1,14 @@
 from enum import Enum
 import sys
 import time
+from tkinter import Menu
 
 sys.path.append('../network')
 
 from multicast_sender import MulticastSender
 from multicast_receiver import MulticastReceiver
+from server import Server
+from client import Client
 
 
 class MenuState(Enum):
@@ -14,6 +17,8 @@ class MenuState(Enum):
     SEARCH_GAMES = 2
     WAITING_FOR_PLAYER = 3
     JOIN_GAME = 4
+    SERVER_GAME_LOOP = 5
+    CLIENT_GAME_LOOP = 6
 
 class GameInterface:
 
@@ -21,6 +26,10 @@ class GameInterface:
 
     SEND_INFO_CMD = "_SEND-INFO_"
     GAME_INFO_CMD = "_GAME-INFO_"
+    JOIN_GAME_CMD = "_JOIN-GAME_"
+    JOIN_ACCEPTED_CMD = "_JOIN-ACCEPTED_"
+
+
 
     def __init__(self):
         self.gameName = None
@@ -28,8 +37,15 @@ class GameInterface:
         self.menuState = MenuState.MAIN_MENU
         self.multicastSender = MulticastSender()
         self.multicastReceiver = MulticastReceiver()
-        self.server = None
-        self.client = None
+        self.server = Server()
+        self.client = Client()
+
+        self.clientPlayerName = None
+        self.serverPlayerName = None
+
+        self.isPlayerJoined = False
+
+        self.serverPlayerIp = None
 
     def start(self):
         self.handleMainMenu()
@@ -38,6 +54,11 @@ class GameInterface:
             self.handleWaitingForPlayer()
         elif self.menuState == MenuState.SEARCH_GAMES:
             self.handleSearchGames()
+
+        if self.menuState == MenuState.SERVER_GAME_LOOP:
+            self.handleServerGameLoop()
+        elif self.menuState == MenuState.CLIENT_GAME_LOOP:
+            self.handleClientGameLoop()
 
     def handleMainMenu(self):
         GameInterface.printx("1- Create Game")
@@ -69,24 +90,35 @@ class GameInterface:
     def handleWaitingForPlayer(self):
         GameInterface.printx("Waiting for players")
 
+        # Listen for game info requests
+
         def onMessageReceived(self, message, senderaddr):
-            print(message)
-            print(senderaddr)
-            sys.stdout.flush()
-
             if message.startswith(GameInterface.SEND_INFO_CMD):
-                self.multicastSender.send(f"{GameInterface.GAME_INFO_CMD}{self.gameName}_")
-
+                self.multicastSender.send(f"{GameInterface.GAME_INFO_CMD}{self.gameName}_{self.multicastSender.nicIp}_")
+        
         self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
 
-        loop = True
-        while loop:
-            input()
-        
-            loop = False
-            self.multicastReceiver.close()
-            self.multicastSender.close()
+        # Listen for join game requests
 
+        def onClientMessageReceived(self, message):
+            if not self.isPlayerJoined and message.startswith(GameInterface.JOIN_GAME_CMD):
+                params = message[1:len(message) - 1].split("_")
+
+                self.menuState = MenuState.SERVER_GAME_LOOP
+                self.clientPlayerName = params[1]
+                self.multicastReceiver.close()
+                self.multicastSender.close()
+                self.server.removeMessageReceivedCb(onClientMessageReceived)
+
+                self.server.send(f"{GameInterface.JOIN_ACCEPTED_CMD}")
+
+                self.isPlayerJoined = True
+
+        self.server.addMessageReceivedCb(lambda msg : onClientMessageReceived(self, msg))
+        self.server.listen()            
+
+        while not self.isPlayerJoined:
+            time.sleep(0.1)
 
     def handleSearchGames(self):
         GameInterface.printx("Looking for games...")
@@ -94,7 +126,7 @@ class GameInterface:
         def onMessageReceived(self, message, senderaddr):
             if message.startswith(GameInterface.GAME_INFO_CMD):
                 params = message[1:len(message) - 1].split("_")
-                self.gameInfos.append(params[1])
+                self.gameInfos.append((params[1], params[2]))
         
         self.multicastReceiver.receive(lambda msg, senderaddr : onMessageReceived(self, msg, senderaddr))
         self.multicastSender.send(GameInterface.SEND_INFO_CMD)
@@ -106,17 +138,20 @@ class GameInterface:
 
             if timer >= GameInterface.JOIN_GAME_TIMEOUT:
                 for i in range(len(self.gameInfos)):
-                    GameInterface.printx(f"1- {self.gameInfos[i]}")
+                    GameInterface.printx(f"1- {self.gameInfos[i][0]}")
 
                 GameInterface.printx(f"{len(self.gameInfos) + 1}- Refresh")
                 GameInterface.printx(type = "wi")
 
                 selectedGame = int(input())
                 if selectedGame >= 1 and selectedGame <= len(self.gameInfos):
-                    # TODO: get server info
                     self.menuState = MenuState.JOIN_GAME
                     self.multicastSender.close()
                     self.multicastReceiver.close()
+
+                    self.serverPlayerIp = self.gameInfos[selectedGame][1]
+
+                    self.handleJoinGame()
 
                     break
                 else:
@@ -125,10 +160,31 @@ class GameInterface:
 
                     self.multicastSender.send(GameInterface.SEND_INFO_CMD)
 
+    def handleJoinGame(self):
+        def onMessageReceived(self, message):
+            if not self.isPlayerJoined and message.startswith(GameInterface.JOIN_ACCEPTED_CMD):
+                # params = message[1:len(message) - 1].split("_")
+                # self.serverPlayerName = params[1]
 
-        
+                self.menuState = MenuState.CLIENT_GAME_LOOP
 
+                self.client.removeMessageReceivedCb(onMessageReceived)
 
+                self.isPlayerJoined = True
+
+        self.client.addMessageReceivedCb(lambda msg : onMessageReceived(self, msg))
+        self.client.connect(self.serverPlayerIp)
+
+        self.client.send(f"{GameInterface.JOIN_GAME_CMD}")
+
+        while not self.isPlayerJoined:
+            time.sleep(0.1)
+
+    def handleServerGameLoop(self):
+        GameInterface.printx("handleServerLoop")
+
+    def handleClientGameLoop(self):
+        GameInterface.printx("handleClientLoop")
     
     # jo = just output
     # wi = wait input
