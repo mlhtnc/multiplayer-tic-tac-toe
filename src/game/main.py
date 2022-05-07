@@ -185,21 +185,6 @@ class GameInterface:
     def handleServerGameLoop(self):
         GameInterface.printx("Game Starting...")
 
-        g = Game()
-        state = GameState.NOT_FINISHED
-
-        while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
-            row, col = self.getMoveFromUser()
-            state = g.move(row, col)
-            g.printBoard()
-
-            self.server.send(f"{GameInterface.MOVE_CMD}_{row}_{col}_")
-
-            GameInterface.printx("Waiting for move...")
-
-            while g.turn == Turn.O:
-                time.sleep(0.1)
-
         def onClientMessageReceived(self, message):
             if message.startswith(GameInterface.MOVE_CMD):
                 params = message[1:len(message) - 1].split("_")
@@ -211,6 +196,22 @@ class GameInterface:
 
         self.server.onMessageReceived += lambda msg : onClientMessageReceived(self, msg)
 
+
+        g = Game()
+        state = GameState.NOT_FINISHED
+
+        while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
+            row, col = self.getMoveFromUser()
+            state = g.move(row, col)
+            g.printBoard()
+
+            self.server.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
+
+            GameInterface.printx("Waiting for move...")
+
+            while g.turn == Turn.O:
+                time.sleep(0.1)
+
         GameInterface.printx("Game over")
 
         self.server.close()
@@ -218,6 +219,18 @@ class GameInterface:
     def handleClientGameLoop(self):
         GameInterface.printx("Game Starting...")
         GameInterface.printx("Waiting for move...")
+
+        def onMessageReceived(self, message):
+            GameInterface.printx(message)
+            if message.startswith(GameInterface.MOVE_CMD):
+                params = message[1:len(message) - 1].split("_")
+                row = params[1]
+                col = params[2]
+
+                g.move(row, col)
+                g.printBoard()
+
+        self.client.onMessageReceived += lambda msg : onMessageReceived(self, msg)
 
 
         g = Game()
@@ -231,23 +244,13 @@ class GameInterface:
             state = g.move(row, col)
             g.printBoard()
 
-            self.client.send(f"{GameInterface.MOVE_CMD}_{row}_{col}_")
+            self.client.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
 
             GameInterface.printx("Waiting for move...")
 
             while g.turn == Turn.X:
                 time.sleep(0.1)
     
-        def onMessageReceived(self, message):
-            if message.startswith(GameInterface.MOVE_CMD):
-                params = message[1:len(message) - 1].split("_")
-                row = params[1]
-                col = params[2]
-
-                g.move(row, col)
-                g.printBoard()
-
-        self.client.onMessageReceived += lambda msg : onMessageReceived(self, msg)
 
         GameInterface.printx("Game over")
 
