@@ -102,28 +102,15 @@ class GameInterface:
         def onClientMessageReceived(self, message):
             if not self.isPlayerJoined and message.startswith(GameInterface.JOIN_GAME_CMD):
                 # params = message[1:len(message) - 1].split("_")
-                GameInterface.printx(message)
-
+                # self.clientPlayerName = params[1]
 
                 self.menuState = MenuState.SERVER_GAME_LOOP
-
-                GameInterface.printx("here1")
-
-                # self.clientPlayerName = params[1]
                 self.multicastReceiver.close()
-                GameInterface.printx("here4")
-
                 self.multicastSender.close()
-                GameInterface.printx("here5")
-
-                GameInterface.printx("here6")
-
+        
                 self.server.send(f"{GameInterface.JOIN_ACCEPTED_CMD}")
-                GameInterface.printx("here3")
 
                 self.isPlayerJoined = True
-                GameInterface.printx(self.isPlayerJoined)
-
 
         self.server.addMessageReceivedCb(lambda msg : onClientMessageReceived(self, msg))
         self.server.listen()            
@@ -181,17 +168,14 @@ class GameInterface:
 
                 self.isPlayerJoined = True
 
+        def onConnected(self):
+            self.client.send(f"{GameInterface.JOIN_GAME_CMD}")
+
         self.client.addMessageReceivedCb(lambda msg : onMessageReceived(self, msg))
+        self.client.addConnectedCb(lambda: onConnected(self))
         self.client.connect(self.serverPlayerIp)
 
-        time.sleep(1)
-
-
-        self.client.send(f"{GameInterface.JOIN_GAME_CMD}")
-        GameInterface.printx("message send")
-
         while not self.isPlayerJoined:
-            GameInterface.printx("x")
             time.sleep(0.1)
 
     def handleServerGameLoop(self):
