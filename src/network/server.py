@@ -21,8 +21,8 @@ class Server:
         self.__messageReceivedCbs = []
         self.__connectionClosedCbs = []
 
-    def listen(self, onConnected, onMessageReceived, onConnectionClosed):
-        thread = threading.Thread(target=self.__listen, args = (onConnected, onMessageReceived, onConnectionClosed))
+    def listen(self):
+        thread = threading.Thread(target=self.__listen)
         thread.start()
 
     def __listen(self):
