@@ -101,10 +101,12 @@ class GameInterface:
 
         def onClientMessageReceived(self, message):
             if not self.isPlayerJoined and message.startswith(GameInterface.JOIN_GAME_CMD):
-                params = message[1:len(message) - 1].split("_")
+                # params = message[1:len(message) - 1].split("_")
+                GameInterface.printx(message)
+
 
                 self.menuState = MenuState.SERVER_GAME_LOOP
-                self.clientPlayerName = params[1]
+                # self.clientPlayerName = params[1]
                 self.multicastReceiver.close()
                 self.multicastSender.close()
                 self.server.removeMessageReceivedCb(onClientMessageReceived)
@@ -148,7 +150,7 @@ class GameInterface:
                     self.multicastSender.close()
                     self.multicastReceiver.close()
 
-                    self.serverPlayerIp = self.gameInfos[selectedGame][1]
+                    self.serverPlayerIp = self.gameInfos[selectedGame - 1][1]
 
                     self.handleJoinGame()
 
@@ -174,9 +176,14 @@ class GameInterface:
         self.client.addMessageReceivedCb(lambda msg : onMessageReceived(self, msg))
         self.client.connect(self.serverPlayerIp)
 
+        time.sleep(1)
+
+
         self.client.send(f"{GameInterface.JOIN_GAME_CMD}")
+        GameInterface.printx("message send")
 
         while not self.isPlayerJoined:
+            GameInterface.printx("x")
             time.sleep(0.1)
 
     def handleServerGameLoop(self):
