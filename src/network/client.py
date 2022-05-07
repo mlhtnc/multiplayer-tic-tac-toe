@@ -8,17 +8,24 @@ class Client:
     FORMAT = 'utf-8'
     DISCONNECT_MESSAGE = "__disconnect__"
 
-    def __init__(self, serverIp):
-        self.serverIp = serverIp
-        self.addr = (self.serverIp, Client.PORT)
+    def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
 
-    def connect(self, onConnectionClosed, onMessageReceived):
-        thread = threading.Thread(target=self.__connect, args = (onConnectionClosed, onMessageReceived))
+        self.__messageReceivedCbs = []
+        self.__connectionClosedCbs = []
+
+    def __setServerIp(self, serverIp):
+        self.serverIp = serverIp
+        self.addr = (self.serverIp, Client.PORT)
+
+    def connect(self, serverIp):
+        self.__setServerIp(serverIp)
+        
+        thread = threading.Thread(target=self.__connect)
         thread.start()
 
-    def __connect(self, onConnectionClosed, onMessageReceived):
+    def __connect(self):
         connected = True
         connectionAborted = False
 
@@ -34,7 +41,7 @@ class Client:
                 if message == Client.DISCONNECT_MESSAGE:
                     connected = False
                 else:
-                    onMessageReceived(message)
+                    self.notifyMessageReceivedCbs(message)
 
         except:
             connectionAborted = True
@@ -42,7 +49,7 @@ class Client:
         if not connectionAborted:
             self.client.close()
             self.connected = False
-            onConnectionClosed()
+            self.notifyConnectionClosedCbs()
             Client.print_immediately("[Client] Disconnected")
 
     def send(self, message):
@@ -54,6 +61,26 @@ class Client:
 
     def isConnected(self):
         return self.connected
+
+    def notifyMessageReceivedCbs(self, message):
+        for cb in self.__messageReceivedCbs:
+            cb(message)
+
+    def notifyConnectionClosedCbs(self):
+        for cb in self.__connectionClosedCbs:
+            cb()
+
+    def addMessageReceivedCb(self, onMessageReceived):
+        self.__messageReceivedCbs.append(onMessageReceived)
+
+    def removeMessageReceivedCb(self, onMessageReceived):
+        self.__messageReceivedCbs.remove(onMessageReceived)
+
+    def addConnectionClosedCb(self, onConnectionClosed):
+        self.__connectionClosedCbs.append(onConnectionClosed)
+
+    def removeConnectionClosedCb(self, onConnectionClosed):
+        self.__connectionClosedCbs.remove(onConnectionClosed)
 
     @staticmethod
     def print_immediately(s):
