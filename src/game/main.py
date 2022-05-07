@@ -181,9 +181,15 @@ class GameInterface:
     def handleServerGameLoop(self):
         GameInterface.printx("handleServerLoop")
 
+
+
+        self.server.close()
+
     def handleClientGameLoop(self):
         GameInterface.printx("handleClientLoop")
     
+        self.client.close()
+
     # jo = just output
     # wi = wait input
     @staticmethod
