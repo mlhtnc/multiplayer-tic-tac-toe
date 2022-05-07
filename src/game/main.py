@@ -1,7 +1,6 @@
 from enum import Enum
 import sys
 import time
-from tkinter import Menu
 
 sys.path.append('../network')
 
