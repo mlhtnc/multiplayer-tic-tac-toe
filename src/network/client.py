@@ -12,6 +12,7 @@ class Client:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
 
+        self.__connectedCbs = []
         self.__messageReceivedCbs = []
         self.__connectionClosedCbs = []
 
@@ -21,7 +22,7 @@ class Client:
 
     def connect(self, serverIp):
         self.__setServerIp(serverIp)
-        
+
         thread = threading.Thread(target=self.__connect)
         thread.start()
 
@@ -32,6 +33,7 @@ class Client:
         try:
             self.client.connect(self.addr)
             self.connected = True
+            self.notifyConnectedCbs()
             Client.print_immediately("[Client] Connected")
 
             while connected and not connectionAborted:
@@ -62,6 +64,10 @@ class Client:
     def isConnected(self):
         return self.connected
 
+    def notifyConnectedCbs(self):
+        for cb in self.__connectedCbs:
+            cb()
+        
     def notifyMessageReceivedCbs(self, message):
         for cb in self.__messageReceivedCbs:
             cb(message)
@@ -69,6 +75,12 @@ class Client:
     def notifyConnectionClosedCbs(self):
         for cb in self.__connectionClosedCbs:
             cb()
+
+    def addConnectedCb(self, onConnected):
+        self.__connectedCbs.append(onConnected)
+
+    def removeConnectedCb(self, onConnected):
+        self.__connectedCbs.remove(onConnected)
 
     def addMessageReceivedCb(self, onMessageReceived):
         self.__messageReceivedCbs.append(onMessageReceived)
