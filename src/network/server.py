@@ -2,6 +2,10 @@ import sys
 import socket 
 import threading
 
+sys.path.append('../helpers/event')
+
+from event import Event
+
 class Server:
     PORT = 5050
     BUF_SIZE = 1024
@@ -17,9 +21,9 @@ class Server:
         self.server.bind(self.addr)
         self.conn = None
 
-        self.__connectedCbs = []
-        self.__messageReceivedCbs = []
-        self.__connectionClosedCbs = []
+        self.onConnected = Event()
+        self.onMessageReceived = Event()
+        self.onConnectionClosed = Event()
 
     def listen(self):
         thread = threading.Thread(target=self.__listen)
@@ -33,7 +37,7 @@ class Server:
 
         try:
             self.conn, addr = self.server.accept()
-            self.notifyConnectedCbs(addr)
+            self.onConnected(addr)
             
             connected = True
             connectionAborted = False
@@ -44,7 +48,7 @@ class Server:
                 if message == Server.DISCONNECT_MESSAGE:
                     connected = False
                 else:
-                    self.notifyMessageReceivedCbs(message)
+                    self.onMessageReceived(message)
 
         except:
             connectionAborted = True
@@ -53,7 +57,7 @@ class Server:
             self.conn.close()
         
         self.conn = None
-        self.notifyConnectionClosedCbs(addr)
+        self.onConnectionClosed(addr)
             
     def send(self, message):
         if self.conn == None:
@@ -70,36 +74,6 @@ class Server:
 
     def isConnected(self):
         return self.conn != None
-
-    def notifyConnectedCbs(self, addr):
-        for cb in self.__connectedCbs:
-            cb(addr)
-
-    def notifyMessageReceivedCbs(self, message):
-        for cb in self.__messageReceivedCbs:
-            cb(message)
-
-    def notifyConnectionClosedCbs(self, addr):
-        for cb in self.__connectionClosedCbs:
-            cb(addr)
-
-    def addConnectedCb(self, onConnected):
-        self.__connectedCbs.append(onConnected)
-
-    def removeConnectedCb(self, onConnected):
-        self.__connectedCbs.remove(onConnected)
-
-    def addMessageReceivedCb(self, onMessageReceived):
-        self.__messageReceivedCbs.append(onMessageReceived)
-
-    def removeMessageReceivedCb(self, onMessageReceived):
-        self.__messageReceivedCbs.remove(onMessageReceived)
-
-    def addConnectionClosedCb(self, onConnectionClosed):
-        self.__connectionClosedCbs.append(onConnectionClosed)
-
-    def removeConnectionClosedCb(self, onConnectionClosed):
-        self.__connectionClosedCbs.remove(onConnectionClosed)
 
     def print_immediately(s):
         print(s)

@@ -112,7 +112,7 @@ class GameInterface:
 
                 self.isPlayerJoined = True
 
-        self.server.addMessageReceivedCb(lambda msg : onClientMessageReceived(self, msg))
+        self.server.onMessageReceived += lambda msg : onClientMessageReceived(self, msg)
         self.server.listen()            
 
         while not self.isPlayerJoined:
@@ -171,8 +171,8 @@ class GameInterface:
         def onConnected(self):
             self.client.send(f"{GameInterface.JOIN_GAME_CMD}")
 
-        self.client.addMessageReceivedCb(lambda msg : onMessageReceived(self, msg))
-        self.client.addConnectedCb(lambda: onConnected(self))
+        self.client.onMessageReceived += lambda msg : onMessageReceived(self, msg)
+        self.client.onConnected += lambda: onConnected(self)
         self.client.connect(self.serverPlayerIp)
 
         while not self.isPlayerJoined:
