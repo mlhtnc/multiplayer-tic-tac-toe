@@ -1,16 +1,14 @@
 from enum import Enum
 import sys
 import time
-from game.game import GameState, Turn
 
 sys.path.append('../network')
-
 
 from multicast_sender import MulticastSender
 from multicast_receiver import MulticastReceiver
 from server import Server
 from client import Client
-from game import Game
+from game import Game, GameState, Turn
 
 
 class MenuState(Enum):
