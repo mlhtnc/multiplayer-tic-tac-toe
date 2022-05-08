@@ -1,15 +1,12 @@
 from enum import Enum
-from shutil import move
 import sys
 import time
 
-sys.path.append('../network')
-
-from multicast_sender import MulticastSender
-from multicast_receiver import MulticastReceiver
-from server import Server
-from client import Client
-from game import Game, GameState, Turn
+from tic_tac_toe.game import Game, GameState
+from network.multicast_sender import MulticastSender
+from network.multicast_receiver import MulticastReceiver
+from network.server import Server
+from network.client import Client
 
 
 class MenuState(Enum):

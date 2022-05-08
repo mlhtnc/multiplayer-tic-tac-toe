@@ -1,12 +1,8 @@
-import sys
 import socket
 import threading
 
-sys.path.append('../helpers/event')
-sys.path.append('../helpers')
-
-from event import Event
-from logger import log
+from helpers.event import Event
+from helpers.logger import log
 
 class Client:
     PORT = 5050

@@ -1,8 +1,5 @@
 import sys
 import time
-
-sys.path.append('..')
-
 from server import Server
 
 

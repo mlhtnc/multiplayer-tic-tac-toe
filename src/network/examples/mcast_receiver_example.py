@@ -1,6 +1,4 @@
 import sys
-sys.path.append('..')
-
 from multicast_receiver import MulticastReceiver
 
 def onMessageReceived(message, senderaddr):
