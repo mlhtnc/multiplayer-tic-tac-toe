@@ -235,8 +235,11 @@ class GameInterface:
 
         if state == GameState.X_WINS:
             GameInterface.printx("You win")
-        else:
+        elif state == GameState.O_WINS:
             GameInterface.printx("You lose")
+        else:
+            GameInterface.printx("Draw") 
+        
 
         self.server.close()
 
@@ -297,8 +300,10 @@ class GameInterface:
 
         if state == GameState.X_WINS:
             GameInterface.printx("You lose")
-        else:
+        elif state == GameState.O_WINS:
             GameInterface.printx("You win")
+        else:
+            GameInterface.printx("Draw") 
 
         self.client.close()
 
