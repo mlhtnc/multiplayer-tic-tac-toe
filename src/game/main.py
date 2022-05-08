@@ -233,8 +233,10 @@ class GameInterface:
             if state != GameState.NOT_FINISHED:
                 break
 
-        GameInterface.printx("Game over")
-        GameInterface.printx(state)
+        if state == GameState.X_WINS:
+            GameInterface.printx("You win")
+        else:
+            GameInterface.printx("You lose")
 
         self.server.close()
 
@@ -293,8 +295,10 @@ class GameInterface:
             if state != GameState.NOT_FINISHED:
                 break
 
-        GameInterface.printx("Game over")
-        GameInterface.printx(state)
+        if state == GameState.X_WINS:
+            GameInterface.printx("You lose")
+        else:
+            GameInterface.printx("You win")
 
         self.client.close()
 
