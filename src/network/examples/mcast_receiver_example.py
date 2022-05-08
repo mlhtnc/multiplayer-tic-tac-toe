@@ -1,18 +1,16 @@
 import sys
 sys.path.append('..')
 
-from multicaster import Multicaster
+from multicast_receiver import MulticastReceiver
 
-def onMessageReceived(message):
+def onMessageReceived(message, senderaddr):
     print(message)
+    print(senderaddr)
     sys.stdout.flush()
 
     m.receive(onMessageReceived)
 
-m = Multicaster()
-
-m.initReceiver()
-
+m = MulticastReceiver()
 m.receive(onMessageReceived)
 
 while True:

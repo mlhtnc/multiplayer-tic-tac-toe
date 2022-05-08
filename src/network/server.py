@@ -2,6 +2,12 @@ import sys
 import socket 
 import threading
 
+sys.path.append('../helpers/event')
+sys.path.append('../helpers')
+
+from event import Event
+from logger import log, logError
+
 class Server:
     PORT = 5050
     BUF_SIZE = 1024
@@ -17,19 +23,23 @@ class Server:
         self.server.bind(self.addr)
         self.conn = None
 
-    def listen(self, onConnected, onMessageReceived, onConnectionClosed):
-        thread = threading.Thread(target=self._listen, args = (onConnected, onMessageReceived, onConnectionClosed))
+        self.onConnected = Event()
+        self.onMessageReceived = Event()
+        self.onConnectionClosed = Event()
+
+    def listen(self):
+        thread = threading.Thread(target=self.__listen)
         thread.start()
 
-    def _listen(self, onConnected, onMessageReceived, onConnectionClosed):
+    def __listen(self):
         self.server.listen()
-        Server.print_immediately(f"[SERVER] Listening on {self.serverIp}")
+        log(f"[SERVER] Listening on {self.serverIp}")
 
         addr = None
 
         try:
             self.conn, addr = self.server.accept()
-            onConnected(addr)
+            self.onConnected(addr)
             
             connected = True
             connectionAborted = False
@@ -40,7 +50,7 @@ class Server:
                 if message == Server.DISCONNECT_MESSAGE:
                     connected = False
                 else:
-                    onMessageReceived(message)
+                    self.onMessageReceived(message)
 
         except:
             connectionAborted = True
@@ -49,11 +59,11 @@ class Server:
             self.conn.close()
         
         self.conn = None
-        onConnectionClosed(addr)
+        self.onConnectionClosed(addr)
             
     def send(self, message):
         if self.conn == None:
-           Server.eprint_immediately(Server.NO_CONNECTION_MESSAGE)
+           logError(Server.NO_CONNECTION_MESSAGE)
            return
 
         self.conn.send(message.encode(Server.FORMAT))
@@ -66,15 +76,6 @@ class Server:
 
     def isConnected(self):
         return self.conn != None
-
-    def print_immediately(s):
-        print(s)
-        sys.stdout.flush()
-
-    @staticmethod
-    def eprint_immediately(s):
-        print(s, file = sys.stderr)
-        sys.stderr.flush()
 
     @staticmethod
     def getNicIp():

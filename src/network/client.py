@@ -2,30 +2,45 @@ import sys
 import socket
 import threading
 
+sys.path.append('../helpers/event')
+sys.path.append('../helpers')
+
+from event import Event
+from logger import log
+
 class Client:
     PORT = 5050
     BUF_SIZE = 1024
     FORMAT = 'utf-8'
     DISCONNECT_MESSAGE = "__disconnect__"
 
-    def __init__(self, serverIp):
-        self.serverIp = serverIp
-        self.addr = (self.serverIp, Client.PORT)
+    def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
 
-    def connect(self, onConnectionClosed, onMessageReceived):
-        thread = threading.Thread(target=self._connect, args = (onConnectionClosed, onMessageReceived))
+        self.onConnected = Event()
+        self.onMessageReceived = Event()
+        self.onConnectionClosed = Event()
+
+    def __setServerIp(self, serverIp):
+        self.serverIp = serverIp
+        self.addr = (self.serverIp, Client.PORT)
+
+    def connect(self, serverIp):
+        self.__setServerIp(serverIp)
+
+        thread = threading.Thread(target=self.__connect)
         thread.start()
 
-    def _connect(self, onConnectionClosed, onMessageReceived):
+    def __connect(self):
         connected = True
         connectionAborted = False
 
         try:
             self.client.connect(self.addr)
             self.connected = True
-            Client.print_immediately("[Client] Connected")
+            self.onConnected()
+            log("[Client] Connected")
 
             while connected and not connectionAborted:
                 message = self.client.recv(Client.BUF_SIZE)
@@ -34,7 +49,7 @@ class Client:
                 if message == Client.DISCONNECT_MESSAGE:
                     connected = False
                 else:
-                    onMessageReceived(message)
+                    self.onMessageReceived(message)
 
         except:
             connectionAborted = True
@@ -42,8 +57,8 @@ class Client:
         if not connectionAborted:
             self.client.close()
             self.connected = False
-            onConnectionClosed()
-            Client.print_immediately("[Client] Disconnected")
+            self.onConnectionClosed()
+            log("[Client] Disconnected")
 
     def send(self, message):
         message = message.encode(Client.FORMAT)
@@ -54,8 +69,3 @@ class Client:
 
     def isConnected(self):
         return self.connected
-
-    @staticmethod
-    def print_immediately(s):
-        print(s)
-        sys.stdout.flush()
