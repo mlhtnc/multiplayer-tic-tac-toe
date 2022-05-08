@@ -1,4 +1,5 @@
 from enum import Enum
+from shutil import move
 import sys
 import time
 
@@ -185,6 +186,8 @@ class GameInterface:
     def handleServerGameLoop(self):
         GameInterface.printx("Game Starting...")
 
+        moveReceived = False
+
         def onClientMessageReceived(self, message):
             if message.startswith(GameInterface.MOVE_CMD):
                 params = message[1:len(message) - 1].split("_")
@@ -194,31 +197,47 @@ class GameInterface:
                 g.move(row, col)
                 g.printBoard()
 
-        self.server.onMessageReceived += lambda msg : onClientMessageReceived(self, msg)
+                nonlocal moveReceived
+                moveReceived = True
 
+        self.server.onMessageReceived += lambda msg : onClientMessageReceived(self, msg)
 
         g = Game()
         state = GameState.NOT_FINISHED
 
-        while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
-            row, col = self.getMoveFromUser()
-            state = g.move(row, col)
-            g.printBoard()
+        while True:
+            while True:
+                row, col = self.getMoveFromUser()
+                state = g.move(row, col)
+                g.printBoard()
 
-            self.server.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
+                if state == GameState.ILLEGAL_MOVE:
+                    GameInterface.printx("You made illegal move, try again")
+                    continue
+                else:
+                    self.server.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
+                    break
 
             GameInterface.printx("Waiting for move...")
 
-            while g.turn == Turn.O:
+            while not moveReceived:
                 time.sleep(0.1)
 
+            moveReceived = False
+
+            if state != GameState.NOT_FINISHED:
+                break
+
         GameInterface.printx("Game over")
+        GameInterface.printx(state)
 
         self.server.close()
 
     def handleClientGameLoop(self):
         GameInterface.printx("Game Starting...")
         GameInterface.printx("Waiting for move...")
+
+        moveReceived = False
 
         def onMessageReceived(self, message):
             GameInterface.printx(message)
@@ -230,31 +249,45 @@ class GameInterface:
                 g.move(row, col)
                 g.printBoard()
 
+                nonlocal moveReceived
+                moveReceived = True
+
         self.client.onMessageReceived += lambda msg : onMessageReceived(self, msg)
 
 
         g = Game()
         state = GameState.NOT_FINISHED
 
-        while g.turn == Turn.X:
+        while not moveReceived:
                 time.sleep(0.1)
 
-        while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
-            GameInterface.printx("z")
+        moveReceived = False
 
-            row, col = self.getMoveFromUser()
-            state = g.move(row, col)
-            g.printBoard()
+        while True:
+            while True:
+                row, col = self.getMoveFromUser()
+                state = g.move(row, col)
+                g.printBoard()
 
-            self.client.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
+                if state == GameState.ILLEGAL_MOVE:
+                    GameInterface.printx("You made illegal move, try again")
+                    continue
+                else:
+                    self.client.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
+                    break
 
             GameInterface.printx("Waiting for move...")
 
-            while g.turn == Turn.X:
+            while not moveReceived:
                 time.sleep(0.1)
-    
+
+            moveReceived = False
+
+            if state != GameState.NOT_FINISHED:
+                break
 
         GameInterface.printx("Game over")
+        GameInterface.printx(state)
 
         self.client.close()
 
