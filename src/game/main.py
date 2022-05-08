@@ -186,6 +186,8 @@ class GameInterface:
     def handleServerGameLoop(self):
         GameInterface.printx("Game Starting...")
 
+        g = Game()
+        state = GameState.NOT_FINISHED
         moveReceived = False
 
         def onClientMessageReceived(self, message):
@@ -194,7 +196,9 @@ class GameInterface:
                 row = int(params[1])
                 col = int(params[2])
 
-                g.move(row, col)
+                nonlocal state
+
+                state = g.move(row, col)
                 g.printBoard()
 
                 nonlocal moveReceived
@@ -202,8 +206,6 @@ class GameInterface:
 
         self.server.onMessageReceived += lambda msg : onClientMessageReceived(self, msg)
 
-        g = Game()
-        state = GameState.NOT_FINISHED
 
         while True:
             while True:
@@ -240,26 +242,25 @@ class GameInterface:
         GameInterface.printx("Game Starting...")
         GameInterface.printx("Waiting for move...")
 
+        g = Game()
+        state = GameState.NOT_FINISHED
         moveReceived = False
 
         def onMessageReceived(self, message):
-            GameInterface.printx(message)
             if message.startswith(GameInterface.MOVE_CMD):
                 params = message[1:len(message) - 1].split("_")
                 row = int(params[1])
                 col = int(params[2])
 
-                g.move(row, col)
+                nonlocal state
+
+                state = g.move(row, col)
                 g.printBoard()
 
                 nonlocal moveReceived
                 moveReceived = True
 
         self.client.onMessageReceived += lambda msg : onMessageReceived(self, msg)
-
-
-        g = Game()
-        state = GameState.NOT_FINISHED
 
         while not moveReceived:
                 time.sleep(0.1)
