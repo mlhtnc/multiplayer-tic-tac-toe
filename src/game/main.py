@@ -218,6 +218,9 @@ class GameInterface:
                     self.server.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
                     break
 
+            if state != GameState.NOT_FINISHED:
+                break
+
             GameInterface.printx("Waiting for move...")
 
             while not moveReceived:
@@ -275,6 +278,9 @@ class GameInterface:
                 else:
                     self.client.send(f"{GameInterface.MOVE_CMD}{row}_{col}_")
                     break
+
+            if state != GameState.NOT_FINISHED:
+                break
 
             GameInterface.printx("Waiting for move...")
 
