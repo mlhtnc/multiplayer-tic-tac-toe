@@ -188,8 +188,8 @@ class GameInterface:
         def onClientMessageReceived(self, message):
             if message.startswith(GameInterface.MOVE_CMD):
                 params = message[1:len(message) - 1].split("_")
-                row = params[1]
-                col = params[2]
+                row = int(params[1])
+                col = int(params[2])
 
                 g.move(row, col)
                 g.printBoard()
@@ -224,8 +224,8 @@ class GameInterface:
             GameInterface.printx(message)
             if message.startswith(GameInterface.MOVE_CMD):
                 params = message[1:len(message) - 1].split("_")
-                row = params[1]
-                col = params[2]
+                row = int(params[1])
+                col = int(params[2])
 
                 g.move(row, col)
                 g.printBoard()
@@ -240,6 +240,8 @@ class GameInterface:
                 time.sleep(0.1)
 
         while state == GameState.NOT_FINISHED or state == GameState.ILLEGAL_MOVE:
+            GameInterface.printx("z")
+
             row, col = self.getMoveFromUser()
             state = g.move(row, col)
             g.printBoard()
